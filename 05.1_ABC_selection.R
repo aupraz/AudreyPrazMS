@@ -15,24 +15,16 @@ source("code/helper_funs.R")
 
 # simulation parameters
 
-sim_par <- fread("third_try/sim_inputs/lhs2_10000.csv")
+sim_par <- fread("baseline/sim_inputs/lhs_25000.csv")
 
 #sim_par[, UID := 1:.N]
 #setcolorder(sim_par, c(12, 1:11))
 
 # Simulated targets
-sim_tar <- setDT(readRDS("third_try/validation_targets/validation_targets_summarised.RDS"))
+sim_tar <- setDT(readRDS("baseline/validation_targets/validation_targets_summarised.RDS"))
 
 sim_tar[, ExtPatternP := round(ExtPattern/5, 1)]
 sim_tar[, Remnant := Persistence_locns]
-
-# sim_tar[, ExtPattern := (Ext.1886 + Ext.1938 + Ext.2003 + Ext.2009 + (1- Ext.2022))]
-#sim_tar[, Persistence_dist := fifelse(Persistence_dist == -999999, NA, Persistence_dist)]
-#sim_tar[, ExtPen.2022 := 271-ExtTS.2022]
-#sim_tar[, ExtPen := sqrt(((ExtPen.1886^2) + (ExtPen.1938^2) + (ExtPen.2003^2) + (ExtPen.2009^2) + (ExtPen.2022^2))/5)] #RMSE of extinction penalty
-#sim_tar[, ExtAbsPen := (abs(ExtPen.1886) + abs(ExtPen.1938) + abs(ExtPen.2003) + abs(ExtPen.2009))/4]
-#sim_tar[, Remnant := fifelse(Ext.2022 == "Extant", 1, 0)]
-#sim_tar[ExtPattern >= 4 & Remnant > 0, ]
 
 # Ensure columns are characters to avoid mismatch due to factors
 sim_par[, UniqueID := as.character(UniqueID)]
@@ -44,8 +36,6 @@ sim_par <- sim_par[UniqueID %in% sim_tar$SampleID]
 # Optionally, also sort both tables by ID to ensure alignment
 setkey(sim_par, UniqueID)
 setkey(sim_tar, SampleID)
-
-
 
 na_idx <- apply(sim_tar, 1, anyNA)
 sum(na_idx) # Some rows have NA for extirpation targets 
@@ -82,7 +72,7 @@ assignInNamespace("normalise", normalise, ns = "abc")
 
 # ABC
 
-tars <- c("SitesProp_9","Persistence_Target", "Persistence_dist","ExtPen")   #"ExtPatternP",      
+tars <- c("SitesProp_9","Persistence_Target", "Persistence_dist","ExtPen")      
           
 first_pass <- abc(target = as.matrix(act_tar[, ..tars]),
                   param = as.matrix(sim_par[, -c(1:2)]),
@@ -107,12 +97,12 @@ plot.targets(x = first_pass,
              obs_targets = unlist(act_tar[,..tars]))+
   scale_y_continuous(trans = "log1p", breaks = c(0, 100, 500, 2500, 5000, 10000), fill=TRUE)
 
-saveRDS(first_pass, "third_try/final_selection/abc_first_pass_final.RDS", compress = TRUE)
+saveRDS(first_pass, "baseline/abc/abc_first_pass.RDS", compress = TRUE)
 
 # make a plot of weighted abundances etc
 ## weights are defined as euc.dist from idealised targets.
 # Quick ensemble raster from all sims
-out_dir <- "counterfactuals/sims_off"
+out_dir <- "baseline/sims_25000"
 files <- sim_par[first_pass$region == TRUE, ][["UniqueID"]]
 files <- paste0("UniqueID_", files, "_results.RData")
 files <- file.path(out_dir, files)
@@ -121,7 +111,7 @@ stopifnot(sum(sapply(files, function(x) file.exists(x))) == sum(first_pass$regio
 burn_in_steps <- 50 # 25 generations
 timesteps <- 271 + burn_in_steps
 plot_seq <- floor(seq(burn_in_steps+1, timesteps, length.out = 6))
-region <- readRDS("third_try/sim_inputs/numbat_paleopopregion.RDS")
+region <- readRDS("baseline/sim_inputs/numbat_paleopopregion.RDS")
 
 # abundances
 ras_list <- lapply(seq_len(timesteps)[-c(1:burn_in_steps)], function(time) {
@@ -143,9 +133,8 @@ plot(wtdAbund[[plot_seq-50]], zlim = c(0, 800),
      col = hcl.colors(100, "Zissou"),
      legend = FALSE)
 
-#writeRaster(wtdAbund, "third_try/abc/wtdAbund_25000.grd")
-writeRaster(wtdAbund, "counterfactuals/abc/Abund_off.tif")
-#wtdAbund <- stack("third_try/abc/wtdAbund_25000.grd")
+writeRaster(wtdAbund, "baseline/abc/wtdAbund_25000.grd")
+#wtdAbund <- stack("baseline/abc/wtdAbund_25000.grd")
 
 # predation rates
 ras_list <- lapply(seq_len(timesteps)[-c(1:burn_in_steps)], function(time) {
@@ -167,9 +156,8 @@ plot(wtdHarv[[plot_seq-50]], zlim = c(0, 60),
      col = hcl.colors(100, "Zissou"),
      legend = FALSE)
 
-#writeRaster(wtdHarv, "third_try/abc/wtdHarv_25000.grd")
-writeRaster(wtdHarv, "counterfactuals/abc/Harv_off.tif")
-#wtdHarv<- stack("third_try/abc/wtdHarv_25000.grd")
+#writeRaster(wtdHarv, "baseline/abc/wtdHarv_25000.grd")
+#wtdHarv<- stack("baseline/abc/wtdHarv_25000.grd")
 
 
 # Try to create the plot to assess the abc selection 
@@ -187,9 +175,9 @@ My_first_BF_results <- data.table(
 )
 
 # Save as CSV
-write.csv(My_first_BF_results, "third_try/abc/bayes_factors_run25000.csv", row.names = FALSE)
+write.csv(My_first_BF_results, "baseline/abc/bayes_factors_run25000.csv", row.names = FALSE)
 
-summary_metric_data <- readRDS("third_try/validation_targets/validation_targets_summarised_new.RDS")
+summary_metric_data <- readRDS("baseline/validation_targets/validation_targets_summarised_new.RDS")
 summary_metric_data <- cbind(sim_par, summary_metric_data)
 
 summary_metric_data_2 <- data.table(
@@ -201,7 +189,7 @@ summary_metric_data$ABC_distance <- first_pass$dist  # Distances from target
 
 summary_metric_data[, Weights := 1/(ABC_distance + .Machine$double.eps)]
 print(head(summary_metric_data))
-write.csv(summary_metric_data, "third_try/validation_targets/validation_targets_summarised.RDS", row.names = FALSE)
+write.csv(summary_metric_data, "baseline/validation_targets/validation_targets_summarised.RDS", row.names = FALSE)
 
 
 
@@ -214,5 +202,5 @@ selected_sims[, `:=`(
 
 head(selected_sims)
 
-write.csv(selected_sims, "third_try/abc/selected_sims.csv", row.names = FALSE)
+write.csv(selected_sims, "baseline/abc/selected_sims.csv", row.names = FALSE)
 
