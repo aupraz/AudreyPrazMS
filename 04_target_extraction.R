@@ -25,16 +25,16 @@ all.equal(coordinates(proj_ext)[,2],  attr(temp_mask, "Y")) ## TRUE
 proj_ext
 
 # simulation inputs
-input_dir <- "third_try/sim_inputs/"
+input_dir <- "baseline/sim_inputs/"
 
 # location of HS projections
 data_dir <- "data/niche_cuts/proj_matrices/projected"
 
 # location of validation targets
-target_dir <- "third_try/validation_targets"
+target_dir <- "baseline/validation_targets"
 
 # location of simulations
-sim_dir <- "third_try/out_sims"
+sim_dir <- "baseline/out_sims"
 
 # time seq not including burnin
 parallel_cores <- 20L # cluster: 20 ?
@@ -198,7 +198,7 @@ regional_pops <- regional_pops
 #### Step 2: Extract targets ####
 
 
-sample_data<- fread("third_try/lhs2_10000.csv")
+sample_data<- fread("third_try/lhs_25000.csv")
 out_sims <- file.path(sim_dir, paste0("UniqueID_", sample_data$UniqueID, "_results.RData"))
 idx <- which(file.exists(out_sims))
 out_sims <- out_sims[idx]
@@ -468,7 +468,7 @@ ext_metrics <- foreach(sample_row = seq_len(nrow(sample_data)),
 stopCluster(cl)
 ext_metrics
 
-saveRDS(ext_metrics, "third_try/validation_targets/validation_targets_10000.RDS", compress = TRUE)
+saveRDS(ext_metrics, "baseline/validation_targets/validation_targets_10000.RDS", compress = TRUE)
 
 
 
@@ -541,10 +541,10 @@ ext_metric_summ[, ExtPen := sqrt(((ExtPen.1886^2) + (ExtPen.1938^2) + (ExtPen.20
 anyNA(ext_metric_summ)
 
 
-saveRDS(ext_metric_summ,"third_try/validation_targets/validation_targets_summarised.RDS",compress = TRUE)
+saveRDS(ext_metric_summ,"baseline/validation_targets/validation_targets_summarised.RDS",compress = TRUE)
 
 
-#ext_metric_summ <- readRDS("third_try/validation_targets/validation_targets_summarised.RDS")
+#ext_metric_summ <- readRDS("baseline/validation_targets/validation_targets_summarised.RDS")
 
 ext_metric_summ
 
