@@ -9,7 +9,7 @@ library(sf)
 
 #### Workflow options ####
 parallel_cores <- 30L # cluster: 20 ?
-nsims <- 75
+nsims <- 25000
 
 str(readRDS("numbat_temporal_region.RDS"), max.level = 2)
 
@@ -21,13 +21,13 @@ plot_seq <- floor(seq(burn_in_steps+1, timesteps, length.out = 6))
 data_dir <- "data/niche_cuts/proj_matrices/projected"
 
 # output directory
-out_dir <- "third_try/out_sims"
+out_dir <- "baseline/out_sims"
 if (!dir.exists(out_dir)) {
   dir.create(out_dir, recursive = TRUE)
 }
 
 # output directory for test simulations
-test_dir <- "third_try/out_sims/test_sims"
+test_dir <- "baseline/out_sims/test_sims"
 
 # time seq not including burnin
 timeseq <- seq(to = 2020, by = 1, length.out = (timesteps - burn_in_steps))
@@ -143,10 +143,10 @@ env_corr <- SpatialCorrelation$new(region = region,
 env_corr$calculate_correlations(distance_matrix = distance_matrix) # all decimals
 env_corr$calculate_cholesky_decomposition(decimals = 3)
 compact_decomposition <- env_corr$get_compact_decomposition() # default threshold
-saveRDS(compact_decomposition, "third_try/sim_inputs/numbat_compact_decomposition_projected2.RDS")
+saveRDS(compact_decomposition, "baseline/sim_inputs/numbat_compact_decomposition_projected.RDS")
 
 ## read in the pre-calculated compact decomposition
-compact_decomposition <- readRDS("third_try/sim_inputs/numbat_compact_decomposition_projected2.RDS")
+compact_decomposition <- readRDS("baseline/sim_inputs/numbat_compact_decomposition_projected.RDS")
 env_corr$t_decomposition_compact_matrix <- compact_decomposition$matrix
 env_corr$t_decomposition_compact_map <- compact_decomposition$map
 
@@ -423,8 +423,8 @@ dispersal_gen <- DispersalGenerator$new(region = region,
                                                    "dispersal_b"), ## dispersal_breadth
                                         decimals = 3)
 dispersal_gen$calculate_distance_data(distance_matrix = distance_matrix) # pre-calculate
-saveRDS(dispersal_gen$distance_data, "third_try/sim_inputs/numbat_dispersal_distance_data_projected2.RDS")
-#dispersal_gen$distance_data <- readRDS("second_try/sim_inputs/numbat_dispersal_distance_data_projected.RDS")
+saveRDS(dispersal_gen$distance_data, "baseline/sim_inputs/numbat_dispersal_distance_data_projected.RDS")
+#dispersal_gen$distance_data <- readRDS("baseline/sim_inputs/numbat_dispersal_distance_data_projected.RDS")
 head(dispersal_gen$distance_data$base)
 summary(dispersal_gen$distance_data$base) ## distance class max == 5 == 50 km
 
@@ -676,8 +676,8 @@ file_check <- pbsapply(unique(sample_data$niche_ref), function(x) {
 sum(file_check) == length(unique(sample_data$niche_ref))
 
 # write the LHS samples to file
-fwrite(sample_data, "third_try/lhs2_1000.csv")
-#sample_data <- fread("third_try/lhs2_1000.csv"")
+fwrite(sample_data, "baseline/lhs_25000.csv")
+#sample_data <- fread("baseline/lhs_25000.csv"")
 
 #### Step 9: Run the simulations ####
 # Create a simulation manager and run the sampled model simulations
@@ -865,14 +865,14 @@ legend("topright", "predation", bty = "n", lty = 1, col = "black")
 
 
  # Checking some simulations 
- simbest <- readRDS("third_try/out_sims_final/UniqueID_YSAT0725_0.8_0111_results.RData")
+ simbest <- readRDS("baseline/out_sims_final/UniqueID_YSAT0725_0.8_0111_results.RData")
  lastlayer <- simbest$abundance[,301]
  lastraster <- region$raster_from_values(lastlayer)
  plot(lastraster)
  writeRaster(lastraster, "counterfactuals/year2020_bestsim4.tif")
  
  library(terra)
- grd_file <- "first_try/niche_cuts2/cut_1_0001.grd"
+ grd_file <- "data/niche_cuts/cut_1_0001.grd"
  raster_stack <- rast(grd_file)
  selected_layer <- raster_stack[[271]]
  plot(selected_layer, main = "Layer 271 of cut_1_0001.grd")
@@ -889,8 +889,8 @@ legend("topright", "predation", bty = "n", lty = 1, col = "black")
  sum(values(lastrast_lu), na.rm = TRUE)
  
  
- simslist <- list.files("E:/Box Sync/students/Audrey Praz/third_try/out_sims", pattern = ".RData", full.names = TRUE)
- nameslist <-list.files("E:/Box Sync/students/Audrey Praz/third_try/out_sims", pattern = ".RData")
+ simslist <- list.files("E:/Box Sync/students/Audrey Praz/baseline/out_sims", pattern = ".RData", full.names = TRUE)
+ nameslist <-list.files("E:/Box Sync/students/Audrey Praz/baseline/out_sims", pattern = ".RData")
  
  landuse_ras <- stack("data/Landuse_change/lu_temp.tif")
  landuse <- as.matrix(landuse_ras)
@@ -905,6 +905,6 @@ legend("topright", "predation", bty = "n", lty = 1, col = "black")
    sim1 <- readRDS(simslist[i])
    sim1$abundance <- sim1$abundance*(1-reg_lu)
    saveRDS(sim1,
-           paste0("E:/Box Sync/students/Audrey Praz/third_try/out_sims2/",nameslist[i]))
+           paste0("E:/Box Sync/students/Audrey Praz/baseline/out_sims/",nameslist[i]))
  }
  
