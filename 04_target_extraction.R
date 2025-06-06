@@ -37,7 +37,7 @@ target_dir <- "baseline/validation_targets"
 sim_dir <- "baseline/out_sims"
 
 # time seq not including burnin
-parallel_cores <- 20L # cluster: 20 ?
+parallel_cores <- 20L 
 nsims <- length(list.files(sim_dir, pattern = ".RData"))
 
 str(readRDS("data/numbat_temporal_region.RDS"), max.level = 2)
@@ -196,7 +196,6 @@ regional_pops <- regional_pops
          pch = 16, col = c("#1b9e77", "#d95f02", "#7570b3", "red", "blue", "grey80"))}
 
 #### Step 2: Extract targets ####
-
 
 sample_data<- fread("third_try/lhs_25000.csv")
 out_sims <- file.path(sim_dir, paste0("UniqueID_", sample_data$UniqueID, "_results.RData"))
@@ -363,12 +362,6 @@ ext_metrics <- foreach(sample_row = seq_len(nrow(sample_data)),
                            p2 <- rasterToPoints(target_raster, fun = function(xx) xx==i, spatial = T)
                          }
                          
-                         # if(sum(abundance_array, na.rm = TRUE) == 0){
-                         #   ext_dist <- NA
-                         # }else{
-                         #   ext_dist <- spDists(p1,p2)
-                         #   ext_dist <- round(min(as.vector(ext_dist)),0)
-                         # }
                          
                          ext_dist <- spDists(p1,p2)
                          ext_dist <- round(mean(as.vector(ext_dist)),0) # mean distance
@@ -391,14 +384,7 @@ ext_metrics <- foreach(sample_row = seq_len(nrow(sample_data)),
                              ts <- reg_sim
                            }
                            ts_ext <- NULL
-                           # time of extinction?
-                           # if (all(ts == 0)) {
-                           #   ts_ext <- 1
-                           #   } else {
-                           #     ts_ext <- base::match(0, ts)
-                           # }
-                           # ext_time <- timeseq[ts_ext]
-                           
+
                            if (all(ts > 0)) {
                              ts_ext <- length(ts)
                            } else {
