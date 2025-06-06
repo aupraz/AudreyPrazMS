@@ -841,7 +841,7 @@ with(res_ext, lines(x = Time, y = Harv, col = "red"))}
 options(scipen = 999)  # Turn off scientific notation globally
 dev.off()
  op <- par()
- png(filename = "third_try/simulation_plots_final.png", height = 5, width = 8, res = 320, units = "in", bg = "white")
+ png(filename = "baseline/simulation_plots_final.png", height = 5, width = 8, res = 320, units = "in", bg = "white")
 par(mfrow = c(2, 1), mar = c(1,4,1,1))
 matplot(t(res_manager$summary_matrix_list$n), type = "l",
         col = "#B8B8B86D", lty = 1, xaxt = "n",
@@ -863,48 +863,3 @@ legend("topright", "predation", bty = "n", lty = 1, col = "black")
  dev.off()
  par(op)
 
-
- # Checking some simulations 
- simbest <- readRDS("baseline/out_sims_final/UniqueID_YSAT0725_0.8_0111_results.RData")
- lastlayer <- simbest$abundance[,301]
- lastraster <- region$raster_from_values(lastlayer)
- plot(lastraster)
- writeRaster(lastraster, "counterfactuals/year2020_bestsim4.tif")
- 
- library(terra)
- grd_file <- "data/niche_cuts/cut_1_0001.grd"
- raster_stack <- rast(grd_file)
- selected_layer <- raster_stack[[271]]
- plot(selected_layer, main = "Layer 271 of cut_1_0001.grd")
- 
- 
- # Multiplying (1-landuse) to the abundances in the case I used the carrying capacity generator without landuse
- landuse <- stack("E:/Box Sync/students/Audrey Praz/data/Landuse_change/lu_temp.tif")
- plot(landuse[[270]])
- 
- lastrast_lu <- lastraster*(1-landuse[[270]])
- plot(lastrast_lu)
- 
- sum(values(lastraster), na.rm = TRUE)
- sum(values(lastrast_lu), na.rm = TRUE)
- 
- 
- simslist <- list.files("E:/Box Sync/students/Audrey Praz/baseline/out_sims", pattern = ".RData", full.names = TRUE)
- nameslist <-list.files("E:/Box Sync/students/Audrey Praz/baseline/out_sims", pattern = ".RData")
- 
- landuse_ras <- stack("data/Landuse_change/lu_temp.tif")
- landuse <- as.matrix(landuse_ras)
- dim(landuse)
- landuse <- landuse[,c(1:271)]
- reg_lu <- landuse[region$region_indices,]
- extra_layers <- matrix(0, nrow = nrow(reg_lu), ncol = 50)  # 50 layers of zeros
- reg_lu <- cbind(extra_layers, reg_lu)  # Add zeros in front
- 
- 
- for(i in 2:length(simslist)){
-   sim1 <- readRDS(simslist[i])
-   sim1$abundance <- sim1$abundance*(1-reg_lu)
-   saveRDS(sim1,
-           paste0("E:/Box Sync/students/Audrey Praz/baseline/out_sims/",nameslist[i]))
- }
- 
